@@ -731,8 +731,486 @@ syngentix/
 4. Returns execution_id immediately (non-blocking)
 5. Celery worker picks up task from queue
 6. WorkflowExecutor initializes:
-   - Loads workflow
-            <!-- Footer -->
+   - Loads workflow definition
+   - Builds DAG (Directed Acyclic Graph)
+   - Performs topological sort for execution order
+7. Execute nodes sequentially/parallel based on dependencies
+8. Each node:
+   - Gets previous node data as input
+   - Validates configuration
+   - Executes with retry logic (exponential backoff)
+   - Returns result + logs
+   - Updates execution state in Cosmos DB
+9. Send real-time updates via WebSocket to frontend
+10. On completion, save final result to database
+    </pre>
+
+    <h2>State Machine</h2>
+    <table>
+        <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Next States</th>
+        </tr>
+        <tr>
+            <td><strong>PENDING</strong></td>
+            <td>Workflow queued, not started</td>
+            <td>RUNNING, CANCELLED</td>
+        </tr>
+        <tr>
+            <td><strong>RUNNING</strong></td>
+            <td>Workflow executing</td>
+            <td>SUCCESS, FAILED, CANCELLED</td>
+        </tr>
+        <tr>
+            <td><strong>SUCCESS</strong></td>
+            <td>Completed successfully</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td><strong>FAILED</strong></td>
+            <td>Error occurred during execution</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td><strong>CANCELLED</strong></td>
+            <td>User cancelled execution</td>
+            <td>-</td>
+        </tr>
+    </table>
+
+    <h2>Error Handling & Retries</h2>
+    <ul>
+        <li><strong>Node-level retries:</strong> Exponential backoff (2^attempt seconds)</li>
+        <li><strong>Max retries per node:</strong> 3 (configurable)</li>
+        <li><strong>Continue on fail:</strong> Optional node setting to continue workflow</li>
+        <li><strong>Dead-letter queue:</strong> Failed executions moved to DLQ for analysis</li>
+        <li><strong>Circuit breaker:</strong> Stop calling failing external APIs temporarily</li>
+    </ul>
+
+    <!-- 8. Azure Deployment -->
+    <h1>8. Azure Deployment Architecture</h1>
+
+    <h2>Recommended Azure Setup</h2>
+    <pre>
+Resource Group: rg-agent-platform-prod
+│
+├── App Service Plan (P1v3 - Linux)
+│   └── App Service: app-agent-api
+│       - FastAPI backend
+│       - Auto-scaling: 2-10 instances
+│       - Health check: /health
+│
+├── Container Instances
+│   ├── Worker 1 (Celery)
+│   ├── Worker 2 (Celery)
+│   └── ... (scale based on queue depth)
+│
+├── Cosmos DB Account
+│   ├── Database: agent-platform
+│   │   ├── Container: workflows
+│   │   ├── Container: executions
+│   │   ├── Container: users
+│   │   ├── Container: workspaces
+│   │   └── Container: credentials
+│   └── Autoscale: 1000-4000 RU/s
+│
+├── Azure Cache for Redis (Premium P1)
+│   - Queue (Celery broker)
+│   - Cache (session, node outputs)
+│   - Geo-replication enabled
+│
+├── Service Bus Namespace (Premium)
+│   └── Queue: workflow-executions
+│       - Dead-letter queue enabled
+│       - Max delivery count: 5
+│
+├── Storage Account
+│   ├── Blob Container: uploads
+│   ├── Blob Container: logs
+│   └── Blob Container: reports
+│
+├── Key Vault
+│   - API keys (OpenAI, Anthropic)
+│   - Connection strings
+│   - OAuth tokens
+│   - Managed Identity access
+│
+├── Static Web App
+│   - React frontend
+│   - CDN distribution
+│   - Custom domain + SSL
+│
+├── Application Insights
+│   - Distributed tracing
+│   - Custom metrics
+│   - Log analytics
+│   - Alerts
+│
+└── Container Registry
+    - Docker images (API + Worker)
+    </pre>
+
+    <div class="cost-estimate">
+        <h3>💰 Monthly Cost Estimates</h3>
+        <table>
+            <tr>
+                <th>Setup</th>
+                <th>Services</th>
+                <th>Cost</th>
+            </tr>
+            <tr>
+                <td><strong>Minimal (Dev/Test)</strong></td>
+                <td>App Service B2, Redis C1, Cosmos 1000 RU/s, 1 Worker</td>
+                <td>~$300-400/month</td>
+            </tr>
+            <tr>
+                <td><strong>Production</strong></td>
+                <td>App Service P1v3, Redis P1, Cosmos 4000 RU/s, Service Bus Premium, 3-5 Workers</td>
+                <td>~$800-1200/month</td>
+            </tr>
+            <tr>
+                <td><strong>Enterprise</strong></td>
+                <td>Add: API Management, AKS, Multi-region, Higher RU/s</td>
+                <td>~$2000-3000/month</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 9. Security & Observability -->
+    <h1>9. Security & Observability</h1>
+
+    <h2>Security Measures</h2>
+    <div class="architecture-box">
+        <h3>🔐 Authentication & Authorization</h3>
+        <ul>
+            <li>OAuth2 with JWT tokens</li>
+            <li>Refresh token rotation</li>
+            <li>Role-based access control (RBAC)</li>
+            <li>Workspace-level permissions</li>
+        </ul>
+
+        <h3>🔒 Credential Management</h3>
+        <ul>
+            <li>Azure Key Vault for secrets</li>
+            <li>Encrypted credentials in Cosmos DB</li>
+            <li>Managed Identity for Azure resources</li>
+            <li>No plaintext API keys in logs</li>
+        </ul>
+
+        <h3>🛡️ Code Execution Sandbox</h3>
+        <ul>
+            <li>RestrictedPython for code runner node</li>
+            <li>No file system access</li>
+            <li>No network access (except whitelisted)</li>
+            <li>Memory limit: 128MB per execution</li>
+            <li>Timeout: 30 seconds</li>
+        </ul>
+
+        <h3>🚦 Rate Limiting</h3>
+        <ul>
+            <li>Per-user: 100 requests/minute</li>
+            <li>Per-workspace: 1000 executions/day</li>
+            <li>IP-based rate limiting for public APIs</li>
+        </ul>
+    </div>
+
+    <h2>Observability Stack</h2>
+    <table>
+        <tr>
+            <th>Layer</th>
+            <th>Tool</th>
+            <th>Metrics</th>
+        </tr>
+        <tr>
+            <td><strong>Application</strong></td>
+            <td>Azure Application Insights</td>
+            <td>Request duration, error rate, custom events</td>
+        </tr>
+        <tr>
+            <td><strong>Infrastructure</strong></td>
+            <td>Azure Monitor</td>
+            <td>CPU, memory, disk, network</td>
+        </tr>
+        <tr>
+            <td><strong>Logs</strong></td>
+            <td>Log Analytics Workspace</td>
+            <td>Structured JSON logs, traces</td>
+        </tr>
+        <tr>
+            <td><strong>Queue</strong></td>
+            <td>Service Bus Metrics</td>
+            <td>Queue depth, throughput, dead-letter count</td>
+        </tr>
+        <tr>
+            <td><strong>Database</strong></td>
+            <td>Cosmos DB Insights</td>
+            <td>RU/s consumption, throttling, latency</td>
+        </tr>
+    </table>
+
+    <h2>Key Metrics to Monitor</h2>
+    <ul>
+        <li>⚡ <strong>Workflow execution time</strong> (P50, P95, P99)</li>
+        <li>📊 <strong>Node execution success rate</strong></li>
+        <li>🔄 <strong>Queue depth</strong> (trigger worker scaling)</li>
+        <li>💰 <strong>RU/s consumption</strong> (Cosmos DB cost)</li>
+        <li>⚠️ <strong>Error rate</strong> by node type</li>
+        <li>👥 <strong>Active users & workspaces</strong></li>
+        <li>🤖 <strong>LLM API costs</strong> (track token usage)</li>
+    </ul>
+
+    <!-- 10. Implementation Roadmap -->
+    <h1>10. Implementation Roadmap</h1>
+
+    <h2>Phase 1: MVP (4-6 weeks)</h2>
+    <div class="decision-box">
+        <h3>Goal: Working end-to-end workflow execution</h3>
+        <ol>
+            <li><strong>Week 1-2: Backend Foundation</strong>
+                <ul>
+                    <li>Setup FastAPI project structure</li>
+                    <li>Implement BaseNode interface</li>
+                    <li>Create 5 core nodes (Entry, Text, LLM, API, Response)</li>
+                    <li>Build NodeRegistry</li>
+                </ul>
+            </li>
+            <li><strong>Week 3-4: Execution Engine</strong>
+                <ul>
+                    <li>Implement WorkflowExecutor (DAG traversal)</li>
+                    <li>Setup Celery + Redis</li>
+                    <li>Add basic retry logic</li>
+                    <li>Cosmos DB persistence</li>
+                </ul>
+            </li>
+            <li><strong>Week 5-6: Frontend + Deployment</strong>
+                <ul>
+                    <li>React Flow workflow builder</li>
+                    <li>Node configuration panel</li>
+                    <li>Execution viewer (polling-based)</li>
+                    <li>Deploy to Azure App Service</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <h2>Phase 2: Complete Node Library (3-4 weeks)</h2>
+    <ul>
+        <li>Implement remaining 17 nodes</li>
+        <li>Add credential management (Key Vault)</li>
+        <li>Node testing framework</li>
+        <li>Documentation for each node</li>
+    </ul>
+
+    <h2>Phase 3: Production Features (4-6 weeks)</h2>
+    <ul>
+        <li>WebSocket real-time updates</li>
+        <li>Workflow versioning & rollback</li>
+        <li>Sub-workflow execution</li>
+        <li>Scheduled workflows (cron)</li>
+        <li>Advanced error handling</li>
+        <li>Cost tracking per workspace</li>
+    </ul>
+
+    <h2>Phase 4: Scale & Optimize (Ongoing)</h2>
+    <ul>
+        <li>Performance profiling & optimization</li>
+        <li>Node output caching</li>
+        <li>Execution queue prioritization</li>
+        <li>Extract heavy nodes to microservices (if needed)</li>
+        <li>A/B testing for workflows</li>
+        <li>Multi-region deployment</li>
+    </ul>
+
+    <div class="warning-box">
+        <h3>⚠️ Common Pitfalls to Avoid</h3>
+        <ul>
+            <li><strong>Over-engineering:</strong> Don't build microservices too early</li>
+            <li><strong>Ignoring costs:</strong> Monitor RU/s consumption from day 1</li>
+            <li><strong>Poor error handling:</strong> Implement retries + dead-letter queue</li>
+            <li><strong>Security gaps:</strong> Never store plaintext credentials</li>
+            <li><strong>No monitoring:</strong> Setup Application Insights immediately</li>
+            <li><strong>Blocking operations:</strong> Always use async/await for I/O</li>
+        </ul>
+    </div>
+
+    <!-- 11. Cost Estimates -->
+    <h1>11. Detailed Cost Breakdown</h1>
+
+    <table>
+        <tr>
+            <th>Service</th>
+            <th>SKU</th>
+            <th>Usage</th>
+            <th>Monthly Cost</th>
+        </tr>
+        <tr>
+            <td>App Service</td>
+            <td>P1v3 (2 vCPU, 8GB RAM)</td>
+            <td>1 instance, auto-scale to 5</td>
+            <td>$200 (base) + $200/instance</td>
+        </tr>
+        <tr>
+            <td>Container Instances</td>
+            <td>2 vCPU, 4GB RAM</td>
+            <td>3 workers × 730 hours</td>
+            <td>$100-200</td>
+        </tr>
+        <tr>
+            <td>Cosmos DB</td>
+            <td>Autoscale 1000-4000 RU/s</td>
+            <td>5GB storage</td>
+            <td>$192 (4000 RU/s)</td>
+        </tr>
+        <tr>
+            <td>Redis Cache</td>
+            <td>Premium P1 (6GB)</td>
+            <td>Queue + cache</td>
+            <td>$167</td>
+        </tr>
+        <tr>
+            <td>Service Bus</td>
+            <td>Premium (1 messaging unit)</td>
+            <td>Task queue</td>
+            <td>$665</td>
+        </tr>
+        <tr>
+            <td>Static Web Apps</td>
+            <td>Standard</td>
+            <td>React frontend</td>
+            <td>$9</td>
+        </tr>
+        <tr>
+            <td>Blob Storage</td>
+            <td>Hot tier, LRS</td>
+            <td>100GB</td>
+            <td>$5</td>
+        </tr>
+        <tr>
+            <td>Key Vault</td>
+            <td>Standard</td>
+            <td>50 secrets</td>
+            <td>$1</td>
+        </tr>
+        <tr>
+            <td>Application Insights</td>
+            <td>Pay-as-you-go</td>
+            <td>20GB/month</td>
+            <td>$50</td>
+        </tr>
+        <tr>
+            <td>Container Registry</td>
+            <td>Standard</td>
+            <td>100GB storage</td>
+            <td>$20</td>
+        </tr>
+        <tr>
+            <td colspan="3"><strong>Total (Production)</strong></td>
+            <td><strong>~$1,609/month</strong></td>
+        </tr>
+    </table>
+
+    <div class="cost-estimate">
+        <h3>💡 Cost Optimization Tips</h3>
+        <ul>
+            <li><strong>Use Redis instead of Service Bus:</strong> Save $500/month (Premium P1 Redis is $167)</li>
+            <li><strong>Start with B2 App Service:</strong> Save $150/month for dev/test</li>
+            <li><strong>Use Cosmos DB serverless:</strong> Pay per request (good for low traffic)</li>
+            <li><strong>Scale workers based on queue depth:</strong> Only run when needed</li>
+            <li><strong>Use Azure Reservations:</strong> Save 30-40% with 1-year commitment</li>
+        </ul>
+    </div>
+
+    <!-- Appendix -->
+    <h1>12. Appendix: Quick Start Commands</h1>
+
+    <h2>Backend Setup</h2>
+    <pre>
+# Clone repository
+git clone https://github.com/your-org/agent-platform.git
+cd agent-platform/backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Setup environment variables
+cp .env.example .env
+# Edit .env with your Azure credentials
+
+# Run database migrations (if using Alembic)
+alembic upgrade head
+
+# Start Redis (for local development)
+docker run -d -p 6379:6379 redis:7-alpine
+
+# Start Celery worker
+celery -A app.workers.celery_app worker --loglevel=info
+
+# Start FastAPI server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    </pre>
+
+    <h2>Frontend Setup</h2>
+    <pre>
+cd frontend
+
+# Install dependencies
+npm install
+
+# Setup environment
+cp .env.example .env
+# Edit .env with API URL
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+    </pre>
+
+    <h2>Docker Deployment</h2>
+    <pre>
+# Build and run with Docker Compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+    </pre>
+
+    <h2>Azure Deployment</h2>
+    <pre>
+# Login to Azure
+az login
+
+# Create resource group
+az group create --name rg-agent-platform --location eastus
+
+# Deploy infrastructure with Terraform
+cd infrastructure/terraform
+terraform init
+terraform plan
+terraform apply
+
+# Build and push Docker images
+az acr login --name youracrname
+docker build -t youracrname.azurecr.io/api:latest .
+docker push youracrname.azurecr.io/api:latest
+
+# Deploy to App Service
+az webapp config container set \
+  --name app-agent-api \
+  --resource-group rg-agent-platform \
+  --docker-custom-image-name youracrname.azurecr.io/api:latest
+    </pre>
+
+    <!-- Footer -->
     <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #64748b;">
         <p><strong>AI Agent Platform Architecture v1.0</strong></p>
         <p>December 2025 | Confidential</p>
@@ -757,4 +1235,6 @@ syngentix/
             📄 Print / Save as PDF
         </button>
     </div>
-        
+
+</body>
+</html>
