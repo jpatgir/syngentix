@@ -348,52 +348,38 @@
         <tr>
             <th>Service</th>
             <th>Purpose</th>
-            <th>Est. Cost/Month</th>
         </tr>
         <tr>
             <td>Azure App Service (P1v3)</td>
             <td>Host FastAPI backend</td>
-            <td>~$200</td>
         </tr>
         <tr>
             <td>Container Instances (2-5 workers)</td>
             <td>Celery workers</td>
-            <td>~$100-200</td>
         </tr>
         <tr>
             <td>Cosmos DB (4000 RU/s)</td>
             <td>NoSQL database</td>
-            <td>~$192</td>
         </tr>
         <tr>
             <td>Redis Cache (P1, 6GB)</td>
             <td>Queue + Cache</td>
-            <td>~$167</td>
-        </tr>
-        <tr>
-            <td>Service Bus (Premium)</td>
-            <td>Message queue</td>
-            <td>~$665</td>
         </tr>
         <tr>
             <td>Static Web Apps</td>
             <td>React frontend</td>
-            <td>~$9</td>
         </tr>
         <tr>
             <td>Key Vault</td>
             <td>Secrets management</td>
-            <td>~$1</td>
         </tr>
         <tr>
             <td>Blob Storage</td>
             <td>File uploads</td>
-            <td>~$5</td>
         </tr>
         <tr>
             <td>Application Insights</td>
             <td>Monitoring</td>
-            <td>~$50</td>
         </tr>
     </table>
 
@@ -415,7 +401,7 @@ NodeRegistry (Singleton)
     └── auto_discover() → Load all nodes
     </pre>
 
-    <h2>22 Nodes to Implement</h2>
+    <h2>22 Nodes Redesigned</h2>
     <table>
         <tr>
             <th>Category</th>
@@ -849,31 +835,7 @@ Resource Group: rg-agent-platform-prod
     - Docker images (API + Worker)
     </pre>
 
-    <div class="cost-estimate">
-        <h3>💰 Monthly Cost Estimates</h3>
-        <table>
-            <tr>
-                <th>Setup</th>
-                <th>Services</th>
-                <th>Cost</th>
-            </tr>
-            <tr>
-                <td><strong>Minimal (Dev/Test)</strong></td>
-                <td>App Service B2, Redis C1, Cosmos 1000 RU/s, 1 Worker</td>
-                <td>~$300-400/month</td>
-            </tr>
-            <tr>
-                <td><strong>Production</strong></td>
-                <td>App Service P1v3, Redis P1, Cosmos 4000 RU/s, Service Bus Premium, 3-5 Workers</td>
-                <td>~$800-1200/month</td>
-            </tr>
-            <tr>
-                <td><strong>Enterprise</strong></td>
-                <td>Add: API Management, AKS, Multi-region, Higher RU/s</td>
-                <td>~$2000-3000/month</td>
-            </tr>
-        </table>
-    </div>
+    
 
     <!-- 9. Security & Observability -->
     <h1>9. Security & Observability</h1>
@@ -902,7 +864,7 @@ Resource Group: rg-agent-platform-prod
             <li>No file system access</li>
             <li>No network access (except whitelisted)</li>
             <li>Memory limit: 128MB per execution</li>
-            <li>Timeout: 30 seconds</li>
+            <li>Timeout: 1 to 5 minute</li>
         </ul>
 
         <h3>🚦 Rate Limiting</h3>
@@ -1052,10 +1014,10 @@ az webapp config container set \
     <!-- Footer -->
     <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #64748b;">
         <p><strong>AI Agent Platform Architecture v1.0</strong></p>
-        <p>December 2025 | Confidential</p>
+        <p>December 2025</p>
         <p style="font-size: 12px; margin-top: 20px;">
             This document contains proprietary information and trade secrets.<br>
-            For questions, contact: architecture@yourcompany.com
+            For questions, contact: chaitali@freshcodes.in
         </p>
     </div>
 
