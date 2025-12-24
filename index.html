@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Platform Architecture Guide</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+            margin-top: 30px;
+            page-break-before: always;
+        }
+        
+        h1:first-of-type {
+            page-break-before: avoid;
+        }
+        
+        h2 {
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+            padding-left: 15px;
+            margin-top: 25px;
+        }
+        
+        h3 {
+            color: #1e3a8a;
+            margin-top: 20px;
+        }
+        
+        .cover {
+            text-align: center;
+            padding: 100px 0;
+            page-break-after: always;
+        }
+        
+        .cover h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            border: none;
+            page-break-before: avoid;
+        }
+        
+        .cover .subtitle {
+            font-size: 24px;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+        
+        .cover .meta {
+            font-size: 16px;
+            color: #94a3b8;
+        }
+        
+        pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            page-break-inside: avoid;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        
+        .architecture-box {
+            background: #f0f9ff;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        
+        .decision-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        .warning-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        
+        th {
+            background: #3b82f6;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .section-number {
+            color: #3b82f6;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .tech-badge {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .cost-estimate {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="cover">
+        <h1>🤖 AI Agent Platform</h1>
+        <div class="subtitle">Complete Architecture Guide</div>
+        <div class="meta">
+            <p><strong>Platform Type:</strong> Visual Workflow Automation (n8n/MindStudio Style)</p>
+            <p><strong>Tech Stack:</strong> Python FastAPI + React + Azure</p>
+            <p><strong>Version:</strong> 1.0</p>
+            <p><strong>Date:</strong> December 2025</p>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <h1>📋 Table of Contents</h1>
+    <ol>
+        <li>Executive Summary</li>
+        <li>Architecture Overview</li>
+        <li>Technology Stack</li>
+        <li>Node Plugin System</li>
+        <li>Backend Folder Structure</li>
+        <li>Frontend Folder Structure</li>
+        <li>Workflow Execution Engine</li>
+        <li>Azure Deployment Architecture</li>
+        <li>Security & Observability</li>
+        <li>Implementation Roadmap</li>
+        <li>Cost Estimates</li>
+    </ol>
+
+    <!-- 1. Executive Summary -->
+    <h1>1. Executive Summary</h1>
+    
+    <div class="architecture-box">
+        <h3>🎯 Project Goal</h3>
+        <p>Build a scalable AI agent and workflow automation platform that allows users to visually design, execute, and monitor complex workflows composed of AI models, APIs, databases, and custom logic.</p>
+    </div>
+
+    <div class="decision-box">
+        <h3>✅ Key Architecture Decision</h3>
+        <p><strong>Recommended Approach: Hybrid Plugin Architecture (Monolith with Async Workers)</strong></p>
+        <ul>
+            <li>✅ Nodes as internal Python packages (NOT microservices)</li>
+            <li>✅ Async execution via Celery workers</li>
+            <li>✅ Cosmos DB for persistence + Redis for queue/cache</li>
+            <li>✅ React Flow for visual workflow builder</li>
+            <li>✅ Azure App Service + Container Instances deployment</li>
+        </ul>
+    </div>
+
+    <h2>Why NOT Microservices for Nodes?</h2>
+    <table>
+        <tr>
+            <th>Consideration</th>
+            <th>Microservices Approach</th>
+            <th>Plugin Approach (Recommended)</th>
+        </tr>
+        <tr>
+            <td><strong>Deployment</strong></td>
+            <td>❌ Complex (20+ services)</td>
+            <td>✅ Simple (1 API + workers)</td>
+        </tr>
+        <tr>
+            <td><strong>Latency</strong></td>
+            <td>❌ Network overhead between nodes</td>
+            <td>✅ In-process execution</td>
+        </tr>
+        <tr>
+            <td><strong>Cost</strong></td>
+            <td>❌ High (separate compute per node)</td>
+            <td>✅ Low (shared resources)</td>
+        </tr>
+        <tr>
+            <td><strong>Debugging</strong></td>
+            <td>❌ Distributed tracing needed</td>
+            <td>✅ Single codebase</td>
+        </tr>
+        <tr>
+            <td><strong>Scalability</strong></td>
+            <td>✅ Scale individual nodes</td>
+            <td>✅ Scale workers horizontally</td>
+        </tr>
+    </table>
+
+    <!-- 2. Architecture Overview -->
+    <h1>2. Architecture Overview</h1>
+
+    <h2>System Architecture Diagram</h2>
+    <pre>
+┌─────────────────────────────────────────────────────────────┐
+│              Frontend (React + Vite + React Flow)            │
+│  Visual Workflow Builder → Redux Store → RTK Query API      │
+└────────────────────────┬────────────────────────────────────┘
+                         │ REST/WebSocket
+┌────────────────────────▼────────────────────────────────────┐
+│           FastAPI Main App (Azure App Service)               │
+│  ┌─────────────┬──────────────┬─────────────┬─────────────┐ │
+│  │   Workflow  │   Node       │  Execution  │   Realtime  │ │
+│  │   API       │   Registry   │   API       │   WebSocket │ │
+│  └─────────────┴──────────────┴─────────────┴─────────────┘ │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│          Azure Service Bus / Redis Queue                     │
+│           (Async Task Queue for Workflows)                   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│     Celery/Dramatiq Workers (Azure Container Instances)      │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │          Workflow Execution Engine                    │   │
+│  │   • State Machine (DAG traversal)                     │   │
+│  │   • Node Executor (calls registered plugins)         │   │
+│  │   • Error Handler & Retry Logic                      │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                               │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │            Node Plugin System (22 Nodes)             │   │
+│  │   Core: Entry, Text, Iterator, Switch, Response      │   │
+│  │   AI: LLM (OpenAI/Azure/Anthropic)                   │   │
+│  │   Integration: API, Email, Zapier                    │   │
+│  │   Data: DB Connect, Fetch/Store, KV Get/Set          │   │
+│  │   Logic: Code Runner, Execute Workflow               │   │
+│  │   Visualization: Bar Chart                           │   │
+│  └──────────────────────────────────────────────────────┘   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                    Azure Cosmos DB                           │
+│  • Workflows (definition, versions)                          │
+│  • Executions (runs, logs, state snapshots)                  │
+│  • Users, Workspaces, Credentials (encrypted)                │
+└──────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <!-- 3. Technology Stack -->
+    <h1>3. Technology Stack</h1>
+
+    <h2>Backend Stack</h2>
+    <div>
+        <span class="tech-badge">Python 3.11</span>
+        <span class="tech-badge">FastAPI</span>
+        <span class="tech-badge">Azure Cosmos DB</span>
+        <span class="tech-badge">Azure App Service</span>
+        <span class="tech-badge">Celery</span>
+        <span class="tech-badge">Redis</span>
+        <span class="tech-badge">Azure Service Bus</span>
+        <span class="tech-badge">OAuth2 + JWT</span>
+        <span class="tech-badge">SlowAPI (Rate Limiting)</span>
+        <span class="tech-badge">RestrictedPython</span>
+    </div>
+
+    <h2>Frontend Stack</h2>
+    <div>
+        <span class="tech-badge">React 18</span>
+        <span class="tech-badge">TypeScript</span>
+        <span class="tech-badge">Vite</span>
+        <span class="tech-badge">React Flow</span>
+        <span class="tech-badge">Redux Toolkit</span>
+        <span class="tech-badge">RTK Query</span>
+        <span class="tech-badge">Material Tailwind UI</span>
+        <span class="tech-badge">TanStack Table v8</span>
+        <span class="tech-badge">WebSocket</span>
+    </div>
+
+    <h2>Azure Services</h2>
+    <table>
+        <tr>
+            <th>Service</th>
+            <th>Purpose</th>
+            <th>Est. Cost/Month</th>
+        </tr>
+        <tr>
+            <td>Azure App Service (P1v3)</td>
+            <td>Host FastAPI backend</td>
+            <td>~$200</td>
+        </tr>
+        <tr>
+            <td>Container Instances (2-5 workers)</td>
+            <td>Celery workers</td>
+            <td>~$100-200</td>
+        </tr>
+        <tr>
+            <td>Cosmos DB (4000 RU/s)</td>
+            <td>NoSQL database</td>
+            <td>~$192</td>
+        </tr>
+        <tr>
+            <td>Redis Cache (P1, 6GB)</td>
+            <td>Queue + Cache</td>
+            <td>~$167</td>
+        </tr>
+        <tr>
+            <td>Service Bus (Premium)</td>
+            <td>Message queue</td>
+            <td>~$665</td>
+        </tr>
+        <tr>
+            <td>Static Web Apps</td>
+            <td>React frontend</td>
+            <td>~$9</td>
+        </tr>
+        <tr>
+            <td>Key Vault</td>
+            <td>Secrets management</td>
+            <td>~$1</td>
+        </tr>
+        <tr>
+            <td>Blob Storage</td>
+            <td>File uploads</td>
+            <td>~$5</td>
+        </tr>
+        <tr>
+            <td>Application Insights</td>
+            <td>Monitoring</td>
+            <td>~$50</td>
+        </tr>
+    </table>
+
+    <!-- 4. Node Plugin System -->
+    <h1>4. Node Plugin System</h1>
+
+    <h2>Node Architecture Pattern</h2>
+    <pre>
+BaseNode (Abstract Class)
+    ├── get_metadata() → NodeMetadata
+    ├── execute(config, context) → NodeExecutionResult
+    ├── validate_config(config)
+    └── pre_execute() / post_execute() hooks
+
+NodeRegistry (Singleton)
+    ├── register(node_class)
+    ├── get(node_id) → Node Class
+    ├── list_all() → List[NodeMetadata]
+    └── auto_discover() → Load all nodes
+    </pre>
+
+    <h2>22 Nodes to Implement</h2>
+    <table>
+        <tr>
+            <th>Category</th>
+            <th>Nodes</th>
+            <th>Priority</th>
+        </tr>
+        <tr>
+            <td><strong>Core</strong></td>
+            <td>Entry, Text, Iterator, Switch, Parameter, Response</td>
+            <td>🔥 High</td>
+        </tr>
+        <tr>
+            <td><strong>AI/LLM</strong></td>
+            <td>LLM Node (OpenAI, Azure, Anthropic)</td>
+            <td>🔥 High</td>
+        </tr>
+        <tr>
+            <td><strong>Integration</strong></td>
+            <td>API Node, Send Email, Mailtrap, Zapier Webhook</td>
+            <td>🔥 High</td>
+        </tr>
+        <tr>
+            <td><strong>Data</strong></td>
+            <td>DB Connect, Fetch Table, Store Table, KV Get/Set, Global Data, To JSON</td>
+            <td>⚡ Medium</td>
+        </tr>
+        <tr>
+            <td><strong>Logic</strong></td>
+            <td>Code Runner (Python Sandbox), Execute Workflow</td>
+            <td>⚡ Medium</td>
+        </tr>
+        <tr>
+            <td><strong>Visualization</strong></td>
+            <td>Bar Chart Node</td>
+            <td>📊 Low</td>
+        </tr>
+    </table>
+
+    <!-- 5. Backend Folder Structure -->
+    <h1>5. Backend Folder Structure (Python)</h1>
+
+    <pre>
+.
+├── app/
+│   ├── main.py                       # FastAPI app factory + startup
+│   │
+│   ├── api/                          # API layer
+│   │   ├── routes.py                 # Central route registration
+│   │   ├── deps.py                   # Shared dependencies
+│   │   └── websocket.py              # WebSocket handlers
+│   │
+│   ├── core/                         # Core configuration
+│   │   ├── application.py            # App initialization
+│   │   ├── config.py                 # Settings (env vars)
+│   │   ├── logger.py                 # Structured logging
+│   │   └── security.py               # JWT, encryption
+│   │
+│   ├── infra/                        # Infrastructure layer
+│   │   ├── cosmos/
+│   │   │   ├── client.py             # Cosmos DB client
+│   │   │   └── base_repository.py    # Base CRUD
+│   │   ├── auth/
+│   │   │   └── token.py              # JWT management
+│   │   ├── storage/
+│   │   │   └── blob_client.py        # Azure Blob
+│   │   ├── queue/
+│   │   │   ├── celery_app.py         # Celery config
+│   │   │   └── redis_client.py       # Redis client
+│   │   └── vault/
+│   │       └── credentials.py        # Key Vault
+│   │
+│   ├── middleware/                   # Request pipeline
+│   │   ├── register.py               # Middleware setup
+│   │   ├── cors.py                   # CORS config
+│   │   ├── logging.py                # Request logging
+│   │   ├── rate_limit.py             # SlowAPI
+│   │   ├── security_headers.py       # CSP, HSTS
+│   │   └── error_handler.py          # Exception handling
+│   │
+│   ├── modules/                      # Domain modules
+│   │   │
+│   │   ├── auth/                     # Authentication
+│   │   │   ├── controller.py         # /auth endpoints
+│   │   │   ├── service.py            # Business logic
+│   │   │   ├── schemas.py            # Pydantic models
+│   │   │   └── repository.py         # Data persistence
+│   │   │
+│   │   ├── users/                    # User management
+│   │   │   ├── controller.py
+│   │   │   ├── service.py
+│   │   │   ├── schemas.py
+│   │   │   └── repository.py
+│   │   │
+│   │   ├── workspaces/               # Workspace/teams
+│   │   │   ├── controller.py
+│   │   │   ├── service.py
+│   │   │   ├── schemas.py
+│   │   │   └── repository.py
+│   │   │
+│   │   ├── workflows/                # 🔥 Workflow management
+│   │   │   ├── controller.py         # CRUD endpoints
+│   │   │   ├── service.py            # Validation, versioning
+│   │   │   ├── schemas.py            # WorkflowDefinition
+│   │   │   ├── repository.py         # Cosmos DB
+│   │   │   └── executor.py           # Execution engine
+│   │   │
+│   │   ├── executions/               # 🔥 Execution tracking
+│   │   │   ├── controller.py         # Start/stop/logs
+│   │   │   ├── service.py            # Queue management
+│   │   │   ├── schemas.py            # ExecutionStatus
+│   │   │   ├── repository.py         # Execution history
+│   │   │   ├── websocket.py          # Real-time updates
+│   │   │   └── monitoring.py         # Metrics tracking
+│   │   │
+│   │   ├── nodes/                    # 🔥 NODE PLUGIN SYSTEM
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py               # BaseNode class
+│   │   │   ├── registry.py           # Node discovery
+│   │   │   │
+│   │   │   ├── core/                 # Core nodes
+│   │   │   │   ├── entry.py
+│   │   │   │   ├── text.py
+│   │   │   │   ├── iterator.py
+│   │   │   │   ├── switch.py
+│   │   │   │   ├── parameter.py
+│   │   │   │   └── response.py
+│   │   │   │
+│   │   │   ├── ai/                   # AI nodes
+│   │   │   │   ├── llm.py
+│   │   │   │   └── prompt_template.py
+│   │   │   │
+│   │   │   ├── integration/          # Integrations
+│   │   │   │   ├── api.py
+│   │   │   │   ├── email.py
+│   │   │   │   ├── mailtrap.py
+│   │   │   │   └── zapier.py
+│   │   │   │
+│   │   │   ├── data/                 # Data ops
+│   │   │   │   ├── database_connect.py
+│   │   │   │   ├── fetch_table.py
+│   │   │   │   ├── store_table.py
+│   │   │   │   ├── kv_get.py
+│   │   │   │   ├── kv_set.py
+│   │   │   │   ├── to_json.py
+│   │   │   │   └── global_data.py
+│   │   │   │
+│   │   │   ├── logic/                # Logic nodes
+│   │   │   │   ├── code_runner.py
+│   │   │   │   └── execute_workflow.py
+│   │   │   │
+│   │   │   └── visualization/        # Output nodes
+│   │   │       └── bar_chart.py
+│   │   │
+│   │   ├── credentials/              # Credential mgmt
+│   │   │   ├── controller.py
+│   │   │   ├── service.py
+│   │   │   ├── schemas.py
+│   │   │   └── repository.py
+│   │   │
+│   │   └── health/                   # Health checks
+│   │       └── controller.py
+│   │
+│   └── workers/                      # 🔥 Async workers
+│       ├── __init__.py
+│       ├── celery_app.py             # Celery config
+│       ├── workflow_tasks.py         # Workflow execution
+│       └── scheduled_tasks.py        # Cron jobs
+│
+├── tests/                            # Test suite
+│   ├── unit/
+│   │   ├── test_nodes.py
+│   │   └── test_executor.py
+│   ├── integration/
+│   │   └── test_workflows.py
+│   └── conftest.py
+│
+├── scripts/                          # Utility scripts
+│   ├── seed_db.py
+│   └── setup_azure.sh
+│
+├── .env                              # Environment variables
+├── .env.example
+├── Dockerfile                        # Main app container
+├── Dockerfile.worker                 # Worker container
+├── docker-compose.yaml
+├── requirements.txt
+├── requirements-dev.txt
+└── run.py
+    </pre>
+
+    <!-- 6. Frontend Folder Structure -->
+    <h1>6. Frontend Folder Structure (React)</h1>
+
+    <pre>
+syngentix/
+├── public/                           # Static assets
+│   └── images/
+│
+├── src/
+│   │
+│   ├── @types/                       # TypeScript definitions
+│   │   ├── auth.ts
+│   │   ├── workflow.ts
+│   │   ├── node.ts
+│   │   ├── execution.ts
+│   │   └── material-tailwind.d.ts
+│   │
+│   ├── assets/                       # Static assets (bundled)
+│   │   ├── background/
+│   │   ├── icons/
+│   │   ├── logos/
+│   │   └── switchIcon/
+│   │
+│   ├── components/                   # Reusable UI components
+│   │   ├── DataTable/                # TanStack Table
+│   │   ├── Icons/                    # Lucide icons
+│   │   ├── Layout/
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── Footer.tsx
+│   │   ├── SearchInput/
+│   │   └── Workflow/                 # 🔥 Workflow builder components
+│   │       ├── NodeSidebar.tsx       # Node palette
+│   │       ├── CustomNode.tsx        # React Flow node
+│   │       ├── NodeConfigPanel.tsx   # Node configuration
+│   │       ├── ExecutionViewer.tsx   # Real-time execution
+│   │       └── MiniMapPanel.tsx
+│   │
+│   ├── configs/
+│   │   └── app.config.ts             # Global settings
+│   │
+│   ├── constants/
+│   │   ├── api.constant.ts           # API endpoints
+│   │   ├── app.constant.ts           # App constants
+│   │   └── navigation.constant.ts    # Routes
+│   │
+│   ├── services/                     # API & Business Logic
+│   │   ├── ApiService.ts             # Axios instance
+│   │   ├── AuthService.ts            # Auth logic
+│   │   ├── WorkflowService.ts        # Workflow CRUD
+│   │   ├── NodeService.ts            # Node registry
+│   │   ├── ExecutionService.ts       # Execution API
+│   │   └── RtkQueryService.ts        # RTK Query slices
+│   │       ├── authApi
+│   │       ├── workflowApi
+│   │       ├── nodeApi
+│   │       └── executionApi
+│   │
+│   ├── store/                        # Redux State Management
+│   │   ├── auth/
+│   │   │   ├── authSlice.ts
+│   │   │   └── authThunks.ts
+│   │   ├── workflow/
+│   │   │   ├── workflowSlice.ts
+│   │   │   └── workflowThunks.ts
+│   │   ├── execution/
+│   │   │   ├── executionSlice.ts
+│   │   │   └── executionThunks.ts
+│   │   ├── index.ts                  # Store configuration
+│   │   └── rootReducer.ts
+│   │
+│   ├── utils/                        # Helpers & Custom Hooks
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useTheme.ts
+│   │   │   ├── useWebSocket.ts       # 🔥 WebSocket hook
+│   │   │   └── useWorkflowBuilder.ts
+│   │   ├── common.ts
+│   │   ├── dateUtils.ts
+│   │   └── logoUtils.ts
+│   │
+│   ├── views/                        # Page Components (Routes)
+│   │   ├── Auth/
+│   │   │   ├── SignIn/
+│   │   │   └── SignUp/
+│   │   ├── Dashboard/
+│   │   │   └── Dashboard.tsx
+│   │   ├── Workflows/                # 🔥 Workflow pages
+│   │   │   ├── WorkflowList.tsx      # List all workflows
+│   │   │   ├── WorkflowBuilder.tsx   # Visual builder (React Flow)
+│   │   │   └── WorkflowExecutions.tsx # Execution history
+│   │   ├── Executions/
+│   │   │   ├── ExecutionList.tsx
+│   │   │   └── ExecutionDetails.tsx  # Logs, metrics
+│   │   ├── Nodes/
+│   │   │   └── NodeCatalog.tsx       # Browse available nodes
+│   │   ├── Profile/
+│   │   ├── Settings/
+│   │   │   ├── Credentials.tsx       # API key management
+│   │   │   └── Preferences.tsx
+│   │   └── Agents/
+│   │
+│   ├── App.tsx                       # Root component
+│   ├── main.tsx                      # Entry point
+│   └── index.css                     # Tailwind directives
+│
+├── package.json
+├── tsconfig.json
+├── vite.config.ts                    # Vite config
+└── tailwind.config.js
+    </pre>
+
+    <!-- 7. Workflow Execution Engine -->
+    <h1>7. Workflow Execution Engine</h1>
+
+    <h2>Execution Flow</h2>
+    <pre>
+1. User clicks "Execute" in frontend
+2. Frontend sends POST /api/workflows/{id}/execute
+3. Backend API validates workflow + enqueues Celery task
+4. Returns execution_id immediately (non-blocking)
+5. Celery worker picks up task from queue
+6. WorkflowExecutor initializes:
+   - Loads workflow
